@@ -1,0 +1,674 @@
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>Minesweeper spoiled by AI</title>
+    <meta name="description" content="This Minesweeper AI does the brain-testing part for you. You do the luck-testing part." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Minesweeper spoiled by AI" />
+    <meta property="og:url" content="https://mame.github.io/minesweeper-spoiled-by-ai/" />
+    <meta property="og:description" content="This Minesweeper AI does the brain-testing part for you. You do the luck-testing part." />
+    <meta property="og:site_name" content="Minesweeper spoiled by AI" />
+    <meta property="og:image" content="https://mame.github.io/minesweeper-spoiled-by-ai/ogp.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@mametter" />
+    <meta name="twitter:title" content="Minesweeper spoiled by AI" />
+    <meta name="twitter:description" content="This Minesweeper AI does the brain-testing part for you. You do the luck-testing part." />
+    <meta name="twitter:image" content="https://mame.github.io/minesweeper-spoiled-by-ai/ogp.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://mame.github.io/minesweeper-js/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="https://mame.github.io/minesweeper-js/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="https://mame.github.io/minesweeper-js/favicon-16x16.png" />
+    <link rel="icon" href="https://mame.github.io/minesweeper-js/favicon.ico" />
+    <meta name="msapplication-TileColor" content="#dcdcdc" />
+    <meta name="theme-color" content="#dcdcdc" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      html {
+        touch-action: manipulation;
+      }
+      body {
+        padding: 0em 1em;
+        background: white;
+        color: black;
+        font-size: 3.5vmin;
+        font-family: sans-serif;
+      }
+      div.header {
+        margin: 1em 0em;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.5em;
+      }
+      div.nav {
+        display: grid;
+        place-content: center;
+        margin: 1em auto;
+      }
+      div.footer {
+        margin: 1em 0em;
+        text-align: center;
+      }
+      div#dashboard {
+        display: flex;
+        justify-content: space-between;
+        margin: 0em auto 0em auto;
+        padding: 0em 0em 0.5em 0em;
+      }
+      span.number {
+        display: inline-block;
+        height: 1.5em;
+        padding: 0.15em;
+        background: black;
+        color: orangered;
+        font-family: "DotGothic16", sans-serif;
+      }
+      span#button {
+        position: relative;
+        display: inline-block;
+        width: 1.5em;
+        height: 1.5em;
+        background: gainsboro;
+        border: 0.15em outset white;
+      }
+      span#button:active {
+        border: 0.15em inset white;
+      }
+      span#icon {
+        position: absolute;
+        display: inline-block;
+        top: 50%;
+        left: 50%;
+        z-index: 1000;
+        transform: translate(-50%, -50%);
+      }
+      span#button span#icon::before { content: "🙂"; }
+      span#button.astonished span#icon::before { content: "🫣"; }
+      span#button.thinking span#icon::before { content: "🤔"; }
+      span#button.gameover span#icon::before { content: "😵"; }
+      span#button.clear span#icon::before { content: "😎"; }
+      div#board {
+        margin: 0em auto;
+        padding: 0.5em;
+        background: gainsboro;
+        user-select: none;
+      }
+      div#field {
+        display: inline-block;
+        margin: auto;
+        height: 192px;
+        width: 192px;
+        border: 5px ridge white;
+        font-size: 12px;
+        font-family: "Press Start 2P", cursive;
+        transform: scale(1);
+        transform-origin: top left;
+      }
+      div#field span {
+        position: relative;
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background: gainsboro;
+        border: 2px outset white;
+        text-align: center;
+        overflow: hidden;
+      }
+      div#field span.active {
+        border: 2px inset white;
+      }
+      div#field span.probed {
+        background: silver;
+        border: 2px inset silver;
+      }
+      div#field span::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      div#field span.c1::before { content: "1"; color: blue; }
+      div#field span.c2::before { content: "2"; color: green; }
+      div#field span.c3::before { content: "3"; color: red; }
+      div#field span.c4::before { content: "4"; color: navy; }
+      div#field span.c5::before { content: "5"; color: darkred; }
+      div#field span.c6::before { content: "6"; color: hotpink; }
+      div#field span.c7::before { content: "7"; color: black; }
+      div#field span.c8::before { content: "8"; color: gray; }
+      div#field span.bomb::before { content: "💣"; }
+      div#field span.boom::before { content: "💣"; }
+      div#field span.boom {
+        background: crimson;
+        border: 2px inset darkgray;
+      }
+      div#field span.flagged::before { content: "🚩"; }
+      div#field span.flag-striked::before { content: "🚩"; }
+      div#field span.flag-striked::after {
+        content: "";
+        position: absolute;
+        display: block;
+        width: 150%;
+        height: 2px;
+        background-color: darkred;
+        transform: translateY(-1px) rotate(45deg);
+        transform-origin: top left;
+      }
+      select#level_selector {
+        margin-bottom: 1em;
+        padding: 10px;
+        background: white;
+        border: 1px solid #333333;
+        font-size: 1em;
+      }
+      input#ai_speed {
+        width: 100%;
+        height: 1em;
+        margin-bottom: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Minesweeper spoiled by AI</h1>
+    </div>
+    <div class="nav">
+      <p>🤔"I do the <i>brain-testing</i> part for you"🎓</p>
+      <p>🙂"You do the <i>luck-testing</i> part"🤞</p>
+    </div>
+    <div id="main">
+      <div id="board">
+        <div id="dashboard">
+          <span id="rest" class="number">000</span>
+          <span id="button"><span id="icon"></span></span>
+          <span id="elapsed" class="number">000</span>
+        </div>
+        <div id="field"></div>
+      </div>
+    </div>
+    <div class="nav">
+      <p>
+        Level:<br />
+        <select id="level_selector">
+          <option value="8:8:10">Beginner: 8x8, 10 mines (12%)</option>
+          <option value="16:16:40">Intermediate: 16x16, 40 mines (16%)</option>
+          <option value="30:16:99">Expert: 30x16, 99 mines (21%)</option>
+          <option value="50:50:500">Superman: 50x50, 500 mines (20%)</option>
+          <option value="100:100:2000">Alien: 100x100, 2000 mines (20%)</option>
+          <option value="68:48:777">Mine2000: 68x48, 777 mines (24%)</option>
+        </select>
+      </p>
+      <p>
+        AI speed:<br />
+        <input type="range" id="ai_speed" min="1" value="1" max="100" />
+      </p>
+    </div>
+    <div class="footer">
+      <p>
+        <a href="https://github.com/mame/minesweeper-spoiled-by-ai">FAQ</a>
+      </p>
+      <p>(C) 2023 Yusuke Endoh</p>
+    </div>
+    <script>
+      const createUI = () => {
+        const elemBoard = document.getElementById("board");
+        const elemDashboard = document.getElementById("dashboard");
+        const elemRestBombs = document.getElementById("rest");
+        const elemIcon = document.getElementById("icon");
+        const elemElapsedTime = document.getElementById("elapsed");
+        const elemField = document.getElementById("field");
+        const elemButton = document.getElementById("button");
+        const elemLevelSelector = document.getElementById("level_selector");
+        const elemAISpeed = document.getElementById("ai_speed");
+
+        let cells = null;
+        let elapsedTimer = null;
+        let inferenceTimer = null;
+
+        const resize = () => {
+          elemBoard.style.width = "";
+          elemField.style.transform = "";
+          const scale = Math.min(
+            elemButton.offsetWidth / 24,
+            elemDashboard.offsetWidth / elemField.offsetWidth,
+            (window.innerHeight - elemDashboard.offsetHeight) / elemField.offsetHeight,
+          );
+          elemBoard.style.height = elemField.offsetHeight * scale + elemDashboard.offsetHeight;
+          elemBoard.style.width = elemField.offsetWidth * scale;
+          elemField.style.transform = `scale(${scale})`;
+        };
+
+        const levelChange = (onLevelChange) => {
+          const level = elemLevelSelector.value.split(":");
+          const width = parseInt(level[0]);
+          const height = parseInt(level[1]);
+          const bombCount = parseInt(level[2]);
+          elemField.style.width = width * 24;
+          elemField.style.height = height * 24;
+          resize();
+          onLevelChange(width, height, bombCount);
+        };
+
+        const init = (onInitialize, onClick, onInfer, onLevelChange) => {
+          window.addEventListener("resize", resize);
+          elemLevelSelector.addEventListener("change", () => levelChange(onLevelChange));
+          levelChange(onLevelChange);
+
+          const mouseEventHandler = (callback) => {
+            return (ev) => {
+              if (ev.target instanceof HTMLSpanElement) {
+                const x = parseInt(ev.target.dataset.x);
+                const y = parseInt(ev.target.dataset.y);
+                callback({ x, y, span: ev.target, right: ev.which == 3 });
+              }
+            };
+          };
+
+          let lastActiveSpan = null;
+          elemField.addEventListener("mousedown", mouseEventHandler(({ span, right }) => {
+            if (span.classList.length == 0 && !right) {
+              elemButton.classList.add("astonished");
+              lastActiveSpan = span;
+              lastActiveSpan.classList.add("active");
+            }
+          }));
+
+          elemField.addEventListener("mousemove", mouseEventHandler(({ span, right }) => {
+            if (lastActiveSpan && span.classList.length == 0 && !right) {
+              lastActiveSpan.classList.remove("active");
+              lastActiveSpan = span;
+              lastActiveSpan.classList.add("active");
+            }
+          }));
+
+          elemField.addEventListener("mouseup", mouseEventHandler(({ x, y, right }) => {
+            if (lastActiveSpan && !right) {
+              lastActiveSpan.classList.remove("active");
+              lastActiveSpan = null;
+              elemButton.classList.remove("astonished");
+            }
+            onClick(x, y, right)
+            if (!inferenceTimer) runInference(onInfer);
+          }));
+
+          elemField.addEventListener("contextmenu", (ev) => {
+            ev.preventDefault();
+            return false;
+          }, false);
+
+          elemButton.addEventListener("click", onInitialize);
+          document.addEventListener("keypress", (ev) => ev.key == "r" && onInitialize());
+        };
+
+        const reconfigure = (width, height, bombCount) => {
+          stopTimer();
+          setNumber("rest", bombCount)
+          setNumber("elapsed", 0);
+          setStatus(null);
+
+          while (elemField.firstChild) elemField.removeChild(elemField.firstChild);
+
+          cells = [];
+          for (let y = 0; y < height; y++) {
+            const div = document.createElement("div");
+            cells[y] = [];
+            for (let x = 0; x < width; x++) {
+              const span = document.createElement("span");
+              span.dataset.x = x;
+              span.dataset.y = y;
+              div.appendChild(span);
+              cells[y][x] = span;
+            }
+            elemField.appendChild(div);
+          }
+
+          elapsedTimer = null;
+          inferenceTimer = null;
+        };
+
+        const setCellState = (x, y, status, restBombCount) => {
+          const list = cells[y][x].classList;
+          list.remove("flagged");
+          if (status) list.add(status);
+          if (status != "" && status != "flagged" && status != "flag-striked") list.add("probed");
+          if (restBombCount !== undefined) setNumber("rest", restBombCount);
+        };
+
+        const setStatus = (status) => {
+          elemButton.classList.remove("gameover", "clear");
+          if (status) elemButton.classList.add(status);
+        };
+
+        const setNumber = (id, n) => {
+          if (n < 0) n = 0;
+          if (n > 999) n = 999;
+          const elem = id == "rest" ? elemRestBombs : elemElapsedTime;
+          elem.innerText = n.toString().padStart(3, '0');
+        };
+
+        const startTimer = () => {
+          if (elapsedTimer) stopTimer();
+          let elapsed = 0;
+          //elapsedTimer = setInterval(() => setNumber("elapsed", ++elapsed), 1000);
+        };
+
+        const stopTimer = () => {
+          if (!elapsedTimer) return;
+          clearInterval(elapsedTimer);
+          elapsedTimer = null;
+        };
+
+        const runInference = (onInfer) => {
+          let ret = null;
+          for (let i = 0; i < elemAISpeed.value; i++) {
+            ret = onInfer();
+            if (!ret) {
+              if (inferenceTimer) {
+                clearInterval(inferenceTimer);
+                inferenceTimer = null;
+              }
+              elemButton.classList.remove("thinking");
+              moveIcon(elemButton);
+              return;
+            }
+          }
+          if (ret) {
+            const { x, y } = ret;
+            moveIcon(cells[y][x]);
+          }
+          elemButton.classList.add("thinking");
+          if (!inferenceTimer) {
+            inferenceTimer = setInterval(() => runInference(onInfer), 200);
+          }
+        };
+
+        const getPos = (elem) => {
+          const pos = elem.getBoundingClientRect();
+          return [(pos.left + pos.right) / 2, (pos.top + pos.bottom) / 2];
+        }
+
+        const moveIcon = (targetElem) => {
+          const [baseX, baseY] = getPos(elemButton);
+          const [prevX, prevY] = getPos(elemIcon);
+          const [nextX, nextY] = getPos(targetElem);
+          elemIcon.animate(
+            [
+              { transform: `translate(${prevX - baseX}px, ${prevY - baseY}px) translate(-50%, -50%)` },
+              { transform: `translate(${nextX - baseX}px, ${nextY - baseY}px) translate(-50%, -50%)` },
+            ],
+            { duration: 180, fill: "forwards" }
+          );
+        };
+
+        const changeStatus = (status, width, height, bombCount) => {
+          switch (status) {
+            case "init":
+              reconfigure(width, height, bombCount);
+              break;
+            case "start":
+              startTimer();
+              break;
+            case "clear":
+            case "gameover":
+              stopTimer();
+              setStatus(status);
+          }
+        };
+
+        return {
+          init,
+          changeStatus,
+          setCellState,
+        };
+      }
+
+      const createGame = (uiChangeStatus, uiSetCellState) => {
+        let state = null;
+        let width = 8;
+        let height = 8;
+        let bombCount = 10;
+        let field = null;
+        let probedCells = null;
+        let unprobedCount = 0;
+        let unflaggedCount = 0;
+
+        const reconfigure = (w, h, bc) => {
+          width = w;
+          height = h;
+          bombCount = Math.min(bc, width * height - 1);
+
+          reinit();
+        }
+
+        const reinit = () => {
+          state = "initialized";
+
+          uiChangeStatus("init", width, height, bombCount);
+
+          field = [];
+          for (let y = 0; y < height; y++) {
+            field[y] = new Array(width);
+            for (let x = 0; x < width; x++) {
+              field[y][x] = { bomb: false, state: "unprobed" };
+            }
+          }
+
+          probedCells = [];
+          unprobedCount = width * height - bombCount;
+          unflaggedCount = bombCount;
+        };
+
+        const random = (n) => {
+          return Math.floor(Math.random() * n);
+        };
+
+        const initBombs = (probedX, probedY) => {
+          let cc = width * height - 1;
+          let bc = bombCount;
+          let offset = 0;
+          while (bc > 0) {
+            if (offset == probedX + probedY * width) offset++;
+            if (random(cc) < bc) {
+              field[Math.floor(offset / width)][offset % width].bomb = true;
+              bc--;
+            }
+            offset++;
+            cc--;
+          }
+
+          state = "playing";
+          uiChangeStatus("start");
+        };
+
+        const clear = () => {
+          state = "end";
+          uiChangeStatus("clear");
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              if (field[y][x].state == "unprobed") {
+                uiSetCellState(x, y, "flagged")
+              }
+            }
+          }
+        };
+
+        const gameover = (probedX, probedY) => {
+          state = "end";
+          uiChangeStatus("gameover");
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const cell = field[y][x];
+              if (cell.state == "flagged" && !cell.bomb) uiSetCellState(x, y, "flag-striked");
+              if (cell.state != "flagged" && cell.bomb) uiSetCellState(x, y, "bomb");
+            }
+          }
+          uiSetCellState(probedX, probedY, "boom")
+        };
+
+        const probe = (x, y) => {
+          if (state == "end") return;
+          if (state == "initialized") initBombs(x, y);
+
+          const stack = [{ x, y }];
+          while (stack.length) {
+            const { x, y } = stack.pop();
+            const cell = field[y][x];
+            if (cell.state != "unprobed") continue;
+            cell.state = "probed";
+
+            if (cell.bomb) return gameover(x, y);
+
+            let bombCount = 0;
+            eachNeighbor(x, y, 1, (x, y, cell) => {
+              if (cell.bomb) bombCount++;
+            });
+            uiSetCellState(x, y, `c${bombCount}`);
+
+            if (--unprobedCount == 0) return clear();
+
+            if (bombCount == 0) eachNeighbor(x, y, 1, (x, y) => stack.push({ x, y }));
+            probedCells.push({ x, y });
+          }
+        };
+
+        const flag = (x, y) => {
+          if (state == "end") return;
+
+          const cell = field[y][x];
+          if (cell.state == "probed") return;
+          if (cell.state == "unprobed") {
+            cell.state = "flagged";
+            uiSetCellState(x, y, "flagged", --unflaggedCount);
+          }
+          else {
+            cell.state = "unprobed";
+            uiSetCellState(x, y, "", ++unflaggedCount);
+          }
+          eachNeighbor(x, y, 1, (x, y, cell) => {
+            if (cell.state == "probed") probedCells.push({ x, y });
+          });
+        };
+
+        const click = (x, y, flag_) => {
+          if (flag_) {
+            flag(x, y);
+          }
+          else {
+            probe(x, y);
+          }
+        };
+
+        const eachNeighbor = (cx, cy, distance, callback) => {
+          const xMin = Math.max(0, cx - distance);
+          const xMax = Math.min(width, cx + distance + 1);
+          const yMin = Math.max(0, cy - distance);
+          const yMax = Math.min(height, cy + distance + 1);
+          for (let y = yMin; y < yMax; y++) {
+            for (let x = xMin; x < xMax; x++) {
+              if (x != cx || y != cy) {
+                const cell = field[y][x];
+                callback(x, y, cell);
+              }
+            }
+          }
+        };
+
+        const count = (x, y) => {
+          let unprobedCount = 0;
+          let bombCount = 0;
+          eachNeighbor(x, y, 1, (x, y, p) => {
+            if (p.state == "unprobed") unprobedCount++;
+            if (p.bomb) bombCount++;
+            if (p.state == "flagged") bombCount--;
+          });
+          return [unprobedCount, bombCount];
+        };
+
+        const countUnshared = (xQ, yQ, xP, yP) => {
+          let unsharedCount = 0;
+          eachNeighbor(xQ, yQ, 1, (xR, yR, r) => {
+            if (r.state == "unprobed" && (Math.abs(xR - xP) >= 2 || Math.abs(yR - yP) >= 2)) {
+              unsharedCount++;
+            }
+          });
+          return unsharedCount;
+        };
+
+        const infer0 = (xP, yP, unprobedCountP, bombCountP, xQ, yQ, unprobedCountQ, bombCountQ, unsharedCountQ) => {
+          const n = bombCountQ - bombCountP;
+
+          let action = null;
+          if (n == unsharedCountQ) action = "probe";
+          if (n == unprobedCountQ - unprobedCountP - unsharedCountQ) action = "flag";
+
+          if (action) {
+            let modified = false;
+            eachNeighbor(xP, yP, 1, (xR, yR, r) => {
+              if (r.state == "unprobed" && (Math.abs(xR - xQ) >= 2 || Math.abs(yR - yQ) >= 2)) {
+                modified = true;
+                click(xR, yR, action == "flag");
+              }
+            });
+            if (!modified) action = null;
+          }
+
+          return action;
+        };
+
+        const infer = () => {
+          if (state != "playing") return false;
+          if (probedCells.length == 0) return false;
+
+          const repushQueue = [];
+          let ret = null;
+          while (probedCells.length) {
+            const { x: xP, y: yP } = probedCells.pop();
+            const p = field[yP][xP];
+            if (p.state == "probed") {
+              const [unprobedCountP, bombCountP] = count(xP, yP);
+
+              if (infer0(xP, yP, unprobedCountP, bombCountP, -2, -2, 0, 0, 0)) {
+                ret = { x: xP, y: yP };
+                break;
+              }
+              let keep = false;
+              let stop = false;
+              eachNeighbor(xP, yP, 2, (xQ, yQ, q) => {
+                if (stop) return;
+                if (q.state == "unprobed") keep = true;
+                if (q.state == "probed") {
+                  const [unprobedCountQ, bombCountQ] = count(xQ, yQ);
+                  const unsharedCountQ = countUnshared(xQ, yQ, xP, yP);
+                  if (infer0(xP, yP, unprobedCountP, bombCountP, xQ, yQ, unprobedCountQ, bombCountQ, unsharedCountQ)) {
+                    ret = { x: xP, y: yP };
+                    stop = true;
+                  }
+                }
+              });
+              if (keep) repushQueue.push({ x: xP, y: yP });
+              if (stop) break;
+            }
+          }
+          probedCells = repushQueue.concat(...probedCells);
+          return ret;
+        };
+
+        return {
+          reconfigure,
+          reinit,
+          click,
+          infer,
+        };
+      }
+
+      const ui = createUI();
+      const game = createGame(ui.changeStatus, ui.setCellState);
+      ui.init(game.reinit, game.click, game.infer, game.reconfigure);
+    </script>
+  </body>
+</html>
