@@ -244,6 +244,11 @@
         };
 
         const levelChange = (onLevelChange) => {
+          for (let i = 0; i < elemLevelSelector.options.length; i++) {
+            if (elemLevelSelector.options[i].selected) {
+              window.location.hash = i ? `level=${i + 1}` : "";
+            }
+          }
           const level = elemLevelSelector.value.split(":");
           const width = parseInt(level[0]);
           const height = parseInt(level[1]);
@@ -255,6 +260,10 @@
         };
 
         const init = (onInitialize, onClick, onInfer, onLevelChange) => {
+          const searchParams = new URLSearchParams(window.location.hash.substring(1));
+          if (searchParams.has("level")) {
+            elemLevelSelector.options[searchParams.get("level") - 1].selected = true;
+          }
           window.addEventListener("resize", resize);
           elemLevelSelector.addEventListener("change", () => levelChange(onLevelChange));
           levelChange(onLevelChange);
