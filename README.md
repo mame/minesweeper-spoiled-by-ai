@@ -63,3 +63,12 @@ My purpose in creating this AI is to take away the fun element of Minesweeper, t
 I agree.
 
 FYI: [Minesweeper 2000 project](http://dobo.o.oo7.jp/soft/mine2000/index.htm).
+
+## This is not AI. It is just an algorithm.
+
+Well, let's ask AI.
+
+Me: "Can a program that semi-automatically solves Minesweeper be considered AI?"
+ChatGPT: "Yes, a program that semi-automatically solves Minesweeper can be considered a form of artificial intelligence (AI)."
+
+AI says it's AI, so why not AI?
