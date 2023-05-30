@@ -89,6 +89,7 @@
       }
       span#button span#icon::before { content: "🙂"; }
       span#button.astonished span#icon::before { content: "🫣"; }
+      span#button.smirking span#icon::before { content: "😏"; }
       span#button.thinking span#icon::before { content: "🤔"; }
       span#button.gameover span#icon::before { content: "😵"; }
       span#button.clear span#icon::before { content: "😎"; }
@@ -377,6 +378,12 @@
           for (let i = 0; i < elemAISpeed.value; i++) {
             ret = onInfer();
             if (!ret) {
+              if (inferenceTimer || i) {
+                elemButton.classList.add("smirking");
+                setTimeout(() => {
+                  elemButton.classList.remove("smirking");
+                }, 800);
+              }
               if (inferenceTimer) {
                 clearInterval(inferenceTimer);
                 inferenceTimer = null;
