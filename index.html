@@ -320,7 +320,12 @@
           }, false);
 
           elemButton.addEventListener("click", onInitialize);
-          document.addEventListener("keypress", (ev) => ev.key == "r" && onInitialize());
+          document.addEventListener("keypress", (ev) => {
+            if (ev.key != "r") return;
+            const tag = ev.target.tagName;
+            if (tag == "INPUT" || tag == "SELECT" || tag == "TEXTAREA") return;
+            onInitialize();
+          });
         };
 
         const reconfigure = (width, height, bombCount) => {
