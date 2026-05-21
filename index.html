@@ -306,6 +306,14 @@
             if (!inferenceTimer) runInference(onInfer);
           }));
 
+          document.addEventListener("mouseup", () => {
+            if (lastActiveSpan) {
+              lastActiveSpan.classList.remove("active");
+              lastActiveSpan = null;
+              elemButton.classList.remove("astonished");
+            }
+          });
+
           elemField.addEventListener("contextmenu", (ev) => {
             ev.preventDefault();
             return false;
