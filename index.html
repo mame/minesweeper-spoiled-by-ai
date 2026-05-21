@@ -355,7 +355,7 @@
             clearInterval(inferenceTimer);
             inferenceTimer = null;
           }
-          moveIcon(elemButton, getPos(elemButton));
+          moveIcon(elemButton, getPos(elemButton), getFieldLayout());
         };
 
         const setCellState = (x, y, status, restBombCount) => {
@@ -391,6 +391,8 @@
         };
 
         const runInference = (onInfer) => {
+          const buttonPos = getPos(elemButton);
+          const fieldLayout = getFieldLayout();
           let ret = null;
           for (let i = 0; i < elemAISpeed.value; i++) {
             ret = onInfer();
@@ -406,13 +408,13 @@
                 inferenceTimer = null;
               }
               elemButton.classList.remove("thinking");
-              moveIcon(elemButton);
+              moveIcon(elemButton, buttonPos, fieldLayout);
               return;
             }
           }
           if (ret) {
             const { x, y } = ret;
-            moveIcon(cells[y][x]);
+            moveIcon(cells[y][x], buttonPos, fieldLayout);
           }
           elemButton.classList.add("thinking");
           if (!inferenceTimer) {
@@ -425,17 +427,36 @@
           return [(pos.left + pos.right) / 2, (pos.top + pos.bottom) / 2];
         }
 
-        const moveIcon = (targetElem) => {
-          const [baseX, baseY] = getPos(elemButton);
-          const [prevX, prevY] = getPos(elemIcon);
-          const [nextX, nextY] = getPos(targetElem);
+        const getFieldLayout = () => {
+          const r = elemField.getBoundingClientRect();
+          const cols = elemField.firstChild?.children.length || 1;
+          const rows = elemField.children.length || 1;
+          return { left: r.left, top: r.top, cellW: r.width / cols, cellH: r.height / rows };
+        };
+
+        let iconDx = 0, iconDy = 0;
+
+        const moveIcon = (targetElem, buttonPos, fieldLayout) => {
+          const [baseX, baseY] = buttonPos;
+          let nextX, nextY;
+          if (targetElem === elemButton) {
+            nextX = baseX; nextY = baseY;
+          } else {
+            const cx = +targetElem.dataset.x;
+            const cy = +targetElem.dataset.y;
+            nextX = fieldLayout.left + (cx + 0.5) * fieldLayout.cellW;
+            nextY = fieldLayout.top + (cy + 0.5) * fieldLayout.cellH;
+          }
+          const nextDx = nextX - baseX, nextDy = nextY - baseY;
           elemIcon.animate(
             [
-              { transform: `translate(${prevX - baseX}px, ${prevY - baseY}px) translate(-50%, -50%)` },
-              { transform: `translate(${nextX - baseX}px, ${nextY - baseY}px) translate(-50%, -50%)` },
+              { transform: `translate(${iconDx}px, ${iconDy}px) translate(-50%, -50%)` },
+              { transform: `translate(${nextDx}px, ${nextDy}px) translate(-50%, -50%)` },
             ],
             { duration: 180, fill: "forwards" }
           );
+          iconDx = nextDx;
+          iconDy = nextDy;
         };
 
         const changeStatus = (status, width, height, bombCount) => {
