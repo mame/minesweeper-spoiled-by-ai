@@ -351,7 +351,11 @@
           }
 
           elapsedTimer = null;
-          inferenceTimer = null;
+          if (inferenceTimer) {
+            clearInterval(inferenceTimer);
+            inferenceTimer = null;
+          }
+          moveIcon(elemButton, getPos(elemButton));
         };
 
         const setCellState = (x, y, status, restBombCount) => {
@@ -363,7 +367,7 @@
         };
 
         const setStatus = (status) => {
-          elemButton.classList.remove("gameover", "clear");
+          elemButton.classList.remove("gameover", "clear", "thinking", "smirking", "astonished");
           if (status) elemButton.classList.add(status);
         };
 
